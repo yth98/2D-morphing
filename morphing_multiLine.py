@@ -38,7 +38,7 @@ def mag(x):
 # angle is clockwise or counterclockwise
 def cross_direction(x, y):
     return np.sign(x[0]*y[1]-x[1]*y[0])
-# project y on x
+# project y on x , ratio of x
 def projection_factor(x, y):
     return x.dot(y) / x.dot(x)
 
@@ -46,21 +46,29 @@ def projection_factor(x, y):
 # In[4]:
 
 
+a, b, p = 0.01, 2, 1
 def morph(dest, src):
-    pairs = [[(0,0),(0,1),(0,0),(0.2,0.8)]] # srcP,srcQ,destP,destQ
-    for i in range(len(pairs[0])): pairs[0][i] = np.array(pairs[0][i])
-    for pair in pairs:
-        PQ = pair[3]-pair[2]
-        P_Q_ = pair[1]-pair[0]
-        for y in range(dest.shape[0]):
-            for x in range(dest.shape[1]):
-                X = np.array([x,y])
+    pairs = [[(0,0),(0,300),(0,0),(180,240)],[(100,0),(400,0),(90,10),(350,90)]] # srcP,srcQ,destP,destQ
+    for i in range(len(pairs)):
+        for j in range(4): pairs[i][j] = np.array(pairs[i][j])
+    for y in range(dest.shape[0]):
+        for x in range(dest.shape[1]):
+            X = np.array([x,y])
+            X_s = np.zeros(2)
+            weights = 0
+            for pair in pairs:
+                PQ = pair[3]-pair[2]
+                P_Q_ = pair[1]-pair[0]
                 u = projection_factor(PQ, X-pair[2]) # scalar, u*PQ is the actual u
                 v = X-pair[2]-u*PQ
                 v_ = P_Q_[::-1]*np.array([-1,1])/mag(PQ) * mag(v)*cross_direction(PQ,X-pair[2])
                 X_ = (pair[0]*(1-u) + pair[1]*u) + v_
                 #print(X, X_, u,v, v_, cross_direction(PQ,X-pair[2]))
-                dest[y][x] = get_pixel(X_[1], X_[0], src)[0:3]
+                weight = (mag(PQ)**p/(a+mag(v)))**b
+                X_s += (X_-X) * weight
+                weights += weight
+            X_s = X + X_s/weights
+            dest[y][x] = get_pixel(X_s[1], X_s[0], src)[0:3]
 
 
 # In[5]:
