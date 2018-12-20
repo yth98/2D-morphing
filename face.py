@@ -7,7 +7,7 @@
 import cv2
 import dlib
 import time
-import numpy
+import numpy as np
 
 time.clock()
 ts=time.clock()
@@ -40,7 +40,6 @@ else:
     def face_draw(src):
         rects = face(src)
         pix = src.copy()
-        #pix = numpy.zeros((*(pix.shape[0:2]),3), numpy.uint8)
         for rect in rects:
             if(not rect is None):
                 cv2.rectangle(pix, *(rect[0:2]), (0,0,255))
@@ -61,3 +60,30 @@ else:
                 for i in range(48,67):
                     cv2.line(pix, rect[2][i], rect[2][i+1], (0,255,0))
         return pix
+
+    def gen_lines(pix):
+        rects = face(pix)
+        faces = []
+        for rect in rects:
+            lines = []
+            if(not rect is None):
+                for i in range(0,16):
+                    lines += [[rect[2][i],rect[2][i+1]]]
+                for i in range(17,21):
+                    lines += [[rect[2][i],rect[2][i+1]]]
+                for i in range(22,26):
+                    lines += [[rect[2][i],rect[2][i+1]]]
+                for i in range(27,30):
+                    lines += [[rect[2][i],rect[2][i+1]]]
+                for i in range(31,35):
+                    lines += [[rect[2][i],rect[2][i+1]]]
+                for i in range(36,41):
+                    lines += [[rect[2][i],rect[2][i+1]]]
+                for i in range(42,47):
+                    lines += [[rect[2][i],rect[2][i+1]]]
+                for i in range(48,67):
+                    lines += [[rect[2][i],rect[2][i+1]]]
+                #lines += [[[0,0],[0,pix.shape[1]-1]],[[0,pix.shape[1]-1],[pix.shape[0]-1,pix.shape[1]-1]],[[pix.shape[0]-1,pix.shape[1]-1],[pix.shape[0]-1,0]],[[pix.shape[0]-1,0],[0,0]]]
+            faces += [lines]
+        if(not len(faces)): return None
+        return np.array(faces[0])
