@@ -66,7 +66,7 @@ def morph(dest, src):
 # In[5]:
 
 
-source = cv2.imread('./img/people_bunch.jpg')
+source = cv2.imread('../img/people_bunch.jpg')
 destination = np.zeros(source.shape).astype(np.uint8)
 print(source.shape) # (height, width, BGR)
 morph(destination, source)

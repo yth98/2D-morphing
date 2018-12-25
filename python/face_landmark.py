@@ -8,6 +8,7 @@ from math import floor, ceil
 import numpy as np
 import cv2
 import matplotlib.pyplot as plt
+import face
 
 
 # In[2]:
@@ -74,10 +75,11 @@ def morph(dest, src):
 # In[5]:
 
 
-source = cv2.imread('./img/people_bunch.jpg')
+source = cv2.imread('../img/person_1/Ming Ouhyoung.png')
 destination = np.zeros(source.shape).astype(np.uint8)
 print(source.shape) # (height, width, BGR)
-morph(destination, source)
+#morph(destination, source)
+destination = face.face_draw(source)
 
 
 # In[6]:
@@ -88,7 +90,7 @@ cv2.waitKey(0)
 cv2.imshow('image', destination)
 cv2.waitKey(0)
 cv2.destroyAllWindows()
-cv2.imwrite('./output.jpg', destination)
+cv2.imwrite('./detect.jpg', destination)
 
 
 # In[7]:
