@@ -79,7 +79,7 @@ void morph(Mat &dest, Mat src) {
 
 int main(int argc, char *argv[]) {
     if (argc < 3) {
-        cout << "Usage: single <source_path> <destination_path>\n";
+        cout << "Usage: multi <source_path> <destination_path>\n";
         return -1;
     }
     // load source as BGRA
