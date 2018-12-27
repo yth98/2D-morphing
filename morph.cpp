@@ -40,8 +40,10 @@ fdots face_dots(Mat img, char *path) {
     assign_image(dimg, cv_image<unsigned char>(img));
 
     std::vector<dlib::rectangle> dets = detector(dimg);
-    if (!dets.size())
-        return std::vector<Vec2d>(68);
+    if (!dets.size()) {
+        cout<<"Face not found in image!"<<endl;
+        return std::vector<Vec2d>(1);
+    }
     std::vector<std::vector<cv::Vec2d>> faces;
     for (int i = 0; i < dets.size(); ++i) {
         full_object_detection shape = predictor(dimg, dets[i]);
@@ -93,7 +95,7 @@ Vec4b get_pixel(double y, double x, Mat src) {
 double mag(Vec2d x) {
     return sqrt(x.dot(x));
 }
-int cross_direction(Vec2d x, Vec2d y) {
+double cross_direction(Vec2d x, Vec2d y) {
     double t = x[0]*y[1]-x[1]*y[0];
     return (t > 0) ? 1 : ((t < 0) ? -1 : 0);
 }
@@ -102,9 +104,7 @@ double projection_factor(Vec2d x, Vec2d y) {
 }
 
 void morph(Mat &dest, Mat src, vector<lPair> pairs) {
-    double a = 0.01, b = 0.5, p = 1;
-    pairs.push_back(lPair(Vec2d(0,0),Vec2d(0,300),Vec2d(0,0),Vec2d(180,240)));
-    pairs.push_back(lPair(Vec2d(100,0),Vec2d(400,0),Vec2d(90,10),Vec2d(350,90)));
+    double a = 0.001, b = 0.3, p = 0.6;
     for (int y = 0; y < dest.size[0]; y++) {
         for (int x = 0; x < dest.size[1]; x++) {
             Vec2d X(x,y), X_s(0,0);
@@ -133,7 +133,7 @@ int main(int argc, char *argv[]) {
         return -1;
     }
     // load source as BGRA
-    unsigned int length = 480, width = 720;
+    unsigned int length = 640, width = 640;
     Mat source1 = imread(argv[1], IMREAD_COLOR);
     Mat source2 = imread(argv[2], IMREAD_COLOR);
     resize(source1, source1, Size(width,length), 0, 0, INTER_AREA);
@@ -142,13 +142,17 @@ int main(int argc, char *argv[]) {
     Mat source2_a(length, width, CV_8UC4);
     cvtColor(source1, source1_a, CV_BGR2BGRA, 4);
     cvtColor(source2, source2_a, CV_BGR2BGRA, 4);
+    cout<<"Images loaded."<<endl;
     // calc face lines
-    double perc = 0.45;
+    double perc = 0.5;
     fdots face1 = face_dots(source1, argv[4]);
     fdots face2 = face_dots(source2, 0);
+    if (face1.size() != 68 || face2.size() != 68)
+        return -1;
     fdots facmid;
     for (int i = 0; i < 68; i++)
         facmid.push_back(face1[i]*(1-perc) + face2[i]*perc);
+    cout<<"Faces found."<<endl;
     // calculate destination
     Mat dest1(length, width, CV_8UC4);
     Mat dest2(length, width, CV_8UC4);
