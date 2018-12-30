@@ -1,6 +1,7 @@
 #include <iostream>
 #include <vector>
 #include <cmath>
+#include <sys/stat.h>
 #include "opencv2/opencv.hpp"
 #include "dlib/opencv/cv_image.h"
 #include "dlib/image_processing.h"
@@ -11,6 +12,7 @@ using std::cout;
 using std::cin;
 using std::endl;
 using std::vector;
+using std::string;
 
 typedef vector<Vec2d> fdots;
 
@@ -61,27 +63,18 @@ fdots face_dots(Mat img, char *path) {
     return faces[0];
 }
 
-vector<Vec2s> llist;
-
-void init_llist(char *path) {
-    std::fstream ls(path);
+vector<lPair> gen_lines(fdots from, fdots to, char *path) {
+    std::fstream llist(path);
     char dummy;
-    while (!ls.eof()) {
-        short p, q;
-        ls >> p >> dummy >> q;
+    vector<lPair> lines;
+    while (!llist.eof()) {
+        int p, q;
+        llist >> p >> dummy >> q;
         if (p>72 || q>72)
             continue;
-        llist.push_back(Vec2s(p,q));
+        lines.push_back(lPair(from[p-1],from[q-1],to[p-1],to[q-1]));
     }
-    ls.close();
-}
-
-vector<lPair> gen_lines(fdots from, fdots to) {
-    vector<lPair> lines;
-    for (Vec2s lmap : llist) {
-        short p = lmap[0]-1, q = lmap[1]-1;
-        lines.push_back(lPair(from[p],from[q],to[p],to[q]));
-    }
+    llist.close();
     return lines;
 }
 
@@ -146,7 +139,7 @@ void morph(Mat &dest, Mat src, vector<lPair> pairs) {
 
 int main(int argc, char *argv[]) {
     if (argc < 6) {
-        cout << "Usage: morph <source1_path> <source2_path> <destination_path> <shape_predictor_68_face_landmarks.dat_path> <face_lines.csv_path>\n";
+        cout << "Usage: morph <source1_path> <source2_path> <destination_folder> <shape_predictor_68_face_landmarks.dat_path> <face_lines.csv_path>\n";
         return -1;
     }
     // load source as BGRA
@@ -161,35 +154,30 @@ int main(int argc, char *argv[]) {
     cvtColor(source2, source2_a, CV_BGR2BGRA, 4);
     cout<<"Images loaded."<<endl;
     // calc face lines
-    double alpha = 0.5;
     fdots face1 = face_dots(source1, argv[4]);
     fdots face2 = face_dots(source2, 0);
-    if (face1.size() < 72 || face2.size() < 72)
+    if (face1.size() < 68 || face2.size() < 68)
         return -1;
-    fdots facmid;
-    for (int i = 0; i < 72; i++)
-        facmid.push_back(face1[i]*(1-alpha) + face2[i]*alpha);
     cout<<"Faces found."<<endl;
-    // prepare line list
-    init_llist(argv[5]);
-    for (Vec2s lmap : llist) {
-        short p = lmap[0]-1, q = lmap[1]-1;
-        line(source1, Point(face1[p][0],face1[p][1]), Point(face1[q][0],face1[q][1]), Scalar(255,0,0));
-        line(source2, Point(face2[p][0],face2[p][1]), Point(face2[q][0],face2[q][1]), Scalar(255,0,0));
-    }
-    // calculate destination
+    fdots facmid;
     Mat dest1(length, width, CV_8UC4);
     Mat dest2(length, width, CV_8UC4);
-    Mat destination(length, width, CV_8UC4);
-    morph(dest1, source1_a, gen_lines(face1, facmid));
-    morph(dest2, source2_a, gen_lines(face2, facmid));
-    addWeighted(dest1,(1-alpha),dest2,alpha,0,destination);
-    // show images
-    imshow("Source 1", source1);
-    imshow("Source 2", source2);
-    imshow("Result", destination);
-    waitKey();
-    imwrite(argv[3], destination);
+    mkdir(argv[3],S_IRWXU|S_IRGRP|S_IXGRP|S_IROTH|S_IXOTH);
+    for (int i = 0; i <= 20; i++) {
+        double alpha = 1.0*i/20;
+        facmid.clear();
+        for (int j = 0; j < 72; j++)
+            facmid.push_back(face1[j]*(1-alpha) + face2[j]*alpha);
+        // calculate destination
+        Mat destination(length, width, CV_8UC4);
+        morph(dest1, source1_a, gen_lines(face1, facmid, argv[5]));
+        morph(dest2, source2_a, gen_lines(face2, facmid, argv[5]));
+        addWeighted(dest1,(1-alpha),dest2,alpha,0,destination);
+        char loc[100];
+        sprintf(loc, "%s/%d.png", argv[3], i);
+        imwrite(loc, destination);
+        cout<<(i+1)<<" of 21 done, saved at "<<loc<<endl;
+    }
     cout<<"Done."<<endl;
     return 0;
 }

@@ -40,17 +40,6 @@ Vec4b get_pixel(double y, double x, Mat src) {
     return (Vec4b)bgra;
 }
 
-double mag(Vec2d x) {
-    return sqrt(x.dot(x));
-}
-int cross_direction(Vec2d x, Vec2d y) {
-    double t = x[0]*y[1]-x[1]*y[0];
-    return (t > 0) ? 1 : ((t < 0) ? -1 : 0);
-}
-double projection_factor(Vec2d x, Vec2d y) {
-    return x.dot(y) / x.dot(x);
-}
-
 void morph(Mat &dest, Mat src) {
     pairs.push_back(lPair(Vec2d(0,0),Vec2d(0,1),Vec2d(0,0),Vec2d(0.2,0.8)));
     for (lPair pair : pairs){
@@ -58,11 +47,10 @@ void morph(Mat &dest, Mat src) {
         Vec2d P_Q_ = pair.Q_ - pair.P_;
         for (int y = 0; y < dest.size[0]; y++) {
             for (int x = 0; x < dest.size[1]; x++) {
-                Vec2d X(x,y), XP = X-pair.P;
-                double u = projection_factor(PQ, XP);
-                Vec2d v = XP-u*PQ;
-                Vec2d v_ = Vec2d(-P_Q_[1],P_Q_[0])/mag(PQ) * mag(v)*cross_direction(PQ,XP);
-                Vec2d X_ = (pair.P_*(1-u) + pair.Q_*u) + v_;
+                Vec2d X(x,y), PX = X-pair.P;
+                double u = PX.dot(PQ) / PQ.dot(PQ);
+                double v = PX.dot(Vec2d(-PQ[1],PQ[0])) / sqrt(PQ.dot(PQ));
+                Vec2d X_ = (pair.P_*(1-u) + pair.Q_*u) + v*Vec2d(-P_Q_[1],P_Q_[0])/sqrt(P_Q_.dot(P_Q_));
                 dest.at<Vec4b>(y,x) = get_pixel(X_[1], X_[0], src);
             }
         }
