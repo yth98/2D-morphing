@@ -63,18 +63,27 @@ fdots face_dots(Mat img, char *path) {
     return faces[0];
 }
 
-vector<lPair> gen_lines(fdots from, fdots to, char *path) {
-    std::fstream llist(path);
+vector<Vec2s> llist;
+
+void init_llist(char *path) {
+    std::fstream ls(path);
     char dummy;
-    vector<lPair> lines;
-    while (!llist.eof()) {
-        int p, q;
-        llist >> p >> dummy >> q;
+    while (!ls.eof()) {
+        short p, q;
+        ls >> p >> dummy >> q;
         if (p>72 || q>72)
             continue;
-        lines.push_back(lPair(from[p-1],from[q-1],to[p-1],to[q-1]));
+        llist.push_back(Vec2s(p,q));
     }
-    llist.close();
+    ls.close();
+}
+
+vector<lPair> gen_lines(fdots from, fdots to) {
+    vector<lPair> lines;
+    for (Vec2s lmap : llist) {
+        short p = lmap[0]-1, q = lmap[1]-1;
+        lines.push_back(lPair(from[p],from[q],to[p],to[q]));
+    }
     return lines;
 }
 
@@ -115,7 +124,7 @@ double dist(double u, double v, Vec2d X, Vec2d P, Vec2d Q) {
 }
 
 void morph(Mat &dest, Mat src, vector<lPair> pairs) {
-    double a = 0.000001, b = 0.8, p = 1.2;
+    double a = 0.00000001, b = 2.0, p = 0;
     for (int y = 0; y < dest.size[0]; y++) {
         for (int x = 0; x < dest.size[1]; x++) {
             Vec2d X(x,y), X_s(0,0);
@@ -163,6 +172,7 @@ int main(int argc, char *argv[]) {
     Mat dest1(length, width, CV_8UC4);
     Mat dest2(length, width, CV_8UC4);
     mkdir(argv[3],S_IRWXU|S_IRGRP|S_IXGRP|S_IROTH|S_IXOTH);
+    init_llist(argv[5]);
     for (int i = 0; i <= 20; i++) {
         double alpha = 1.0*i/20;
         facmid.clear();
@@ -170,8 +180,8 @@ int main(int argc, char *argv[]) {
             facmid.push_back(face1[j]*(1-alpha) + face2[j]*alpha);
         // calculate destination
         Mat destination(length, width, CV_8UC4);
-        morph(dest1, source1_a, gen_lines(face1, facmid, argv[5]));
-        morph(dest2, source2_a, gen_lines(face2, facmid, argv[5]));
+        morph(dest1, source1_a, gen_lines(face1, facmid));
+        morph(dest2, source2_a, gen_lines(face2, facmid));
         addWeighted(dest1,(1-alpha),dest2,alpha,0,destination);
         char loc[100];
         sprintf(loc, "%s/%d.png", argv[3], i);

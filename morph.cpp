@@ -122,7 +122,7 @@ double dist(double u, double v, Vec2d X, Vec2d P, Vec2d Q) {
 }
 
 void morph(Mat &dest, Mat src, vector<lPair> pairs) {
-    double a = 0.000001, b = 0.8, p = 1.2;
+    double a = 0.00000001, b = 2.0, p = 0;
     for (int y = 0; y < dest.size[0]; y++) {
         for (int x = 0; x < dest.size[1]; x++) {
             Vec2d X(x,y), X_s(0,0);

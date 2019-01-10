@@ -123,7 +123,7 @@ double dist(double u, double v, Vec2d X, Vec2d P, Vec2d Q) {
 
 void morph(Mat &dest, Mat src, vector<lPair> pairs) {
     clock_t t1 = clock();
-    double a = 0.000001, b = 0.8, p = 1.2;
+    double a = 0.00000001, b = 2.0, p = 0;
     for (int y = 0; y < dest.size[0]; y++) {
         for (int x = 0; x < dest.size[1]; x++) {
             Vec2d X(x,y), X_s(0,0);
@@ -149,7 +149,7 @@ void morph(Mat &dest, Mat src, vector<lPair> pairs) {
 
 int main(int argc, char *argv[]) {
     if (argc < 4) {
-        cout << "Usage: morph <source1_path> <shape_predictor_68_face_landmarks.dat_path> <face_lines.csv_path>\n";
+        cout << "Usage: morphcam <source_img_path> <shape_predictor_68_face_landmarks.dat_path> <face_lines.csv_path>\n";
         return -1;
     }
     // load camera
